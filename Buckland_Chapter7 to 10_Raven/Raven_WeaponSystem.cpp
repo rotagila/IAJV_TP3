@@ -11,7 +11,8 @@
 #include "2D/transformations.h"
 
 
-
+#define  LOG_CREATIONAL_STUFF
+#include "debug/DebugConsole.h"
 //------------------------- ctor ----------------------------------------------
 //-----------------------------------------------------------------------------
 Raven_WeaponSystem::Raven_WeaponSystem(Raven_Bot* owner,
@@ -202,9 +203,16 @@ void Raven_WeaponSystem::TakeAimAndShoot()const
             m_dReactionTime) &&
            m_pOwner->hasLOSto(AimingPos) )
       {
-        AddNoiseToAim(AimingPos);
 
-        GetCurrentWeapon()->ShootAt(AimingPos);
+		double DistToTarget = (AimingPos - m_pOwner->Pos()).Length();
+		double Velocity = m_pOwner->Velocity().Length();
+		double TargetVisibility = m_pOwner->GetTargetSys()->GetTimeTargetHasBeenVisible();
+
+		double precision = m_pOwner->GetPrecision(DistToTarget,Velocity,TargetVisibility);
+
+		AddNoiseToAim(AimingPos, precision);
+
+		GetCurrentWeapon()->ShootAt(AimingPos);
       }
     }
 
@@ -217,7 +225,13 @@ void Raven_WeaponSystem::TakeAimAndShoot()const
            (m_pOwner->GetTargetSys()->GetTimeTargetHasBeenVisible() >
             m_dReactionTime) )
       {
-        AddNoiseToAim(AimingPos);
+		  double DistToTarget = (AimingPos - m_pOwner->Pos()).Length();
+		  double Velocity = m_pOwner->Velocity().Length();
+		  double TargetVisibility = m_pOwner->GetTargetSys()->GetTimeTargetHasBeenVisible();
+
+		  double precision = m_pOwner->GetPrecision(DistToTarget, Velocity, TargetVisibility);
+
+		  AddNoiseToAim(AimingPos, precision);
         
         GetCurrentWeapon()->ShootAt(AimingPos);
       }
@@ -238,14 +252,17 @@ void Raven_WeaponSystem::TakeAimAndShoot()const
 //  adds a random deviation to the firing angle not greater than m_dAimAccuracy 
 //  rads
 //-----------------------------------------------------------------------------
-void Raven_WeaponSystem::AddNoiseToAim(Vector2D& AimingPos)const
+void Raven_WeaponSystem::AddNoiseToAim(Vector2D& AimingPos, double precision)const
 {
   Vector2D toPos = AimingPos - m_pOwner->Pos();
 
-  Vec2DRotateAroundOrigin(toPos, RandInRange(-m_dAimAccuracy, m_dAimAccuracy));
+  double deviation = ((100 - precision)/100) * RandInRange(-m_dAimAccuracy, m_dAimAccuracy);
+
+  Vec2DRotateAroundOrigin(toPos, deviation);
 
   AimingPos = toPos + m_pOwner->Pos();
 }
+
 
 //-------------------------- PredictFuturePositionOfTarget --------------------
 //
@@ -330,3 +347,4 @@ void Raven_WeaponSystem::RenderDesirabilities()const
       }
     }
 }
+
