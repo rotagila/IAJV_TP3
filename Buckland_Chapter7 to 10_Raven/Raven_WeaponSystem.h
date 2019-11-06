@@ -21,12 +21,12 @@ class Raven_Weapon;
 
 class Raven_WeaponSystem
 {
-private:
-  
-  //a map of weapon instances indexed into by type
-  typedef std::map<int, Raven_Weapon*>  WeaponMap;
+
+
 
 private:
+	//a map of weapon instances indexed into by type
+	typedef std::map<int, Raven_Weapon*>  WeaponMap;
 
   Raven_Bot*       m_pOwner;
 
@@ -59,7 +59,9 @@ private:
 
   //adds a random deviation to the firing angle not greater than m_dAimAccuracy 
   //rads
-  void        AddNoiseToAim(Vector2D& AimingPos)const;
+  void        AddNoiseToAim(Vector2D& AimingPos, double precision)const;
+
+
 
 public:
 

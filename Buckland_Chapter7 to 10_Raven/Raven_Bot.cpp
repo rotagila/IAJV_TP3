@@ -77,10 +77,13 @@ Raven_Bot::Raven_Bot(Raven_Game* world,Vector2D pos):
 
   m_pWeaponSys = new Raven_WeaponSystem(this,
                                         script->GetDouble("Bot_ReactionTime"),
-                                        script->GetDouble("Bot_AimAccuracy"),
+                                        //script->GetDouble("Bot_AimAccuracy"),
+										0.6,
                                         script->GetDouble("Bot_AimPersistance"));
 
   m_pSensoryMem = new Raven_SensoryMemory(this, script->GetDouble("Bot_MemorySpan"));
+
+  InitializeFuzzyModule();
 }
 
 //-------------------------------- dtor ---------------------------------------
@@ -576,4 +579,89 @@ void Raven_Bot::IncreaseHealth(unsigned int val)
 {
   m_iHealth+=val; 
   Clamp(m_iHealth, 0, m_iMaxHealth);
+}
+
+
+double Raven_Bot::GetPrecision(double DistToTarget, double Velocity, double TargetVisibility) {
+
+	m_FuzzyModule.Fuzzify("DistToTarget", DistToTarget);
+
+	m_FuzzyModule.Fuzzify("VisibilityOfTarget", TargetVisibility);
+
+	m_FuzzyModule.Fuzzify("VelocityOfBot", Velocity);
+
+	m_dLastPrecisionScore = m_FuzzyModule.DeFuzzify("Precision", FuzzyModule::max_av);
+
+	return m_dLastPrecisionScore;
+}
+
+//-------------------------  InitializeFuzzyModule ----------------------------
+//
+//  set up some fuzzy variables and rules
+//-----------------------------------------------------------------------------
+void Raven_Bot::InitializeFuzzyModule() {
+
+	FuzzyVariable& DistToTarget = m_FuzzyModule.CreateFLV("DistToTarget");
+
+	FzSet& Target_Close = DistToTarget.AddLeftShoulderSet("Target_Close", 0, 25, 150);
+	FzSet& Target_Medium = DistToTarget.AddTriangularSet("Target_Medium", 25, 150, 300);
+	FzSet& Target_Far = DistToTarget.AddRightShoulderSet("Target_Far", 150, 300, 1000);
+
+
+	FuzzyVariable& VelocityOfBot = m_FuzzyModule.CreateFLV("VelocityOfBot");
+
+	FzSet& Velocity_High = VelocityOfBot.AddRightShoulderSet("Velocity_High", 0.5, 0.75, 1.5);
+	FzSet& Velocity_Medium = VelocityOfBot.AddTriangularSet("Velocity_Medium", 0.25, 0.50, 0.75);
+	FzSet& Velocity_Low = VelocityOfBot.AddLeftShoulderSet("Velocity_Low", 0, 0.25,0.5);
+
+
+	FuzzyVariable& VisibilityOfTarget = m_FuzzyModule.CreateFLV("VisibilityOfTarget");
+
+	FzSet& Visibility_High = VisibilityOfTarget.AddRightShoulderSet("Visibility_High", 0.75, .5, 1000);
+	FzSet& Visibility_Medium = VisibilityOfTarget.AddTriangularSet("Visibility_Medium", 0.25, 0.75, 1.5);
+	FzSet& Visibility_Low = VisibilityOfTarget.AddLeftShoulderSet("Visibility_Low", 0, 0.25, 0.5);
+
+
+	FuzzyVariable& Precision = m_FuzzyModule.CreateFLV("Precision");
+
+	FzSet& Precision_High = Precision.AddRightShoulderSet("Precision_High", 50, 75, 100);
+	FzSet& Precision_Medium = Precision.AddTriangularSet("Precision_Medium", 25, 50, 100);
+	FzSet& Precision_Low = Precision.AddLeftShoulderSet("Precision_Low", 0, 25, 50);
+
+
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_High, Visibility_High), Precision_High);
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_High, Visibility_Medium), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_High, Visibility_Low), Precision_Low);
+
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_Medium, Visibility_High), Precision_High);
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_Medium, Visibility_Medium), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_Medium, Visibility_Low), Precision_Medium);
+
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_Low, Visibility_High), Precision_High);
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_Low, Visibility_Medium), Precision_High);
+	m_FuzzyModule.AddRule(FzAND(Target_Close, Velocity_Low, Visibility_Low), Precision_High);
+
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_High, Visibility_High), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_High, Visibility_Medium), Precision_Low);
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_High, Visibility_Low), Precision_Low);
+
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_Medium, Visibility_High), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_Medium, Visibility_Medium), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_Medium, Visibility_Low), Precision_Medium);
+
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_Low, Visibility_High), Precision_High);
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_Low, Visibility_Medium), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Medium, Velocity_Low, Visibility_Low), Precision_Medium);
+
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_High, Visibility_High), Precision_Low);
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_High, Visibility_Medium), Precision_Low);
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_High, Visibility_Low), Precision_Low);
+
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Medium, Visibility_High), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Medium, Visibility_Medium), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Medium, Visibility_Low), Precision_Low);
+
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Low, Visibility_High), Precision_High);
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Low, Visibility_Medium), Precision_Medium);
+	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Low, Visibility_Low), Precision_Low);
 }

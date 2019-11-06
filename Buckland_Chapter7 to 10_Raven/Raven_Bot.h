@@ -16,7 +16,7 @@
 #include "game/MovingEntity.h"
 #include "misc/utils.h"
 #include "Raven_TargetingSystem.h"
-
+#include "fuzzy/FuzzyModule.h"
 
 class Raven_PathPlanner;
 class Raven_Steering;
@@ -34,6 +34,18 @@ class Raven_SensoryMemory;
 
 class Raven_Bot : public MovingEntity
 {
+
+public :
+	double GetPrecision(double DistToTarget, double Velocity, double TargetVisibility);
+
+private:
+
+	void     InitializeFuzzyModule();
+
+protected:
+	FuzzyModule   m_FuzzyModule;
+	double m_dLastPrecisionScore;
+
 private:
 
   enum Status{alive, dead, spawning};
