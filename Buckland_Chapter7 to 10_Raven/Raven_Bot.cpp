@@ -22,6 +22,11 @@
 
 #include "Debug/DebugConsole.h"
 
+#include <iostream>
+#include <fstream>
+
+using namespace std;
+
 //-------------------------- ctor ---------------------------------------------
 Raven_Bot::Raven_Bot(Raven_Game* world,Vector2D pos):
 
@@ -83,6 +88,12 @@ Raven_Bot::Raven_Bot(Raven_Game* world,Vector2D pos):
 
   m_pSensoryMem = new Raven_SensoryMemory(this, script->GetDouble("Bot_MemorySpan"));
 
+  // initialisation pour les données d'observation du training set
+  m_vecObservation = std::vector<double>(0);
+  m_vecTarget = std::vector<double>(0);
+
+  humanHaveShoot = false;
+
   InitializeFuzzyModule();
 }
 
@@ -123,6 +134,8 @@ void Raven_Bot::Spawn(Vector2D pos)
 //
 void Raven_Bot::Update()
 {
+  bool haveShoot = false;
+
   //process the currently active goal. Note this is required even if the bot
   //is under user control. This is because a goal is created whenever a user 
   //clicks on an area of the map that necessitates a path planning request.
@@ -160,9 +173,42 @@ void Raven_Bot::Update()
       m_pWeaponSys->SelectWeapon();       
     }
 
-    //this method aims the bot's current weapon at the current target
-    //and takes a shot if a shot is possible
-    m_pWeaponSys->TakeAimAndShoot();
+	//this method aims the bot's current weapon at the current target
+	//and takes a shot if a shot is possible
+	m_pWeaponSys->TakeAimAndShoot();
+  }
+
+  // if the bot is possessed by a human player
+  if (isPossessed() && m_pTargSys->isTargetPresent()) {
+	  debug_con << "Getting observations from bot " << this->ID() << "";
+	  m_vecObservation.clear();
+	  m_vecTarget.clear();
+
+	  m_vecObservation.push_back((Pos().Distance(m_pTargSys->GetTarget()->Pos()))); // add distance to target observation
+	  m_vecObservation.push_back(m_pTargSys->isTargetWithinFOV()); // add if the target is in FOV
+	  m_vecObservation.push_back(m_pWeaponSys->GetAmmoRemainingForWeapon(m_pWeaponSys->GetCurrentWeapon()->GetType())); // add remaining ammo
+	  m_vecObservation.push_back(m_pWeaponSys->GetCurrentWeapon()->GetType()); // add current weapon type
+	  m_vecObservation.push_back((Health())); // add current remaining health
+
+	  ofstream datasetFile;
+	  datasetFile.open("datasetfile.csv", ios::app);
+	  for (double observation : m_vecObservation) {
+		  datasetFile << observation << ",";
+	  }
+
+	  // if the human player shot
+	  if (humanHaveShoot) {
+		  m_vecTarget.push_back(1); // la classe de l'observation est positive. Il tire
+		  datasetFile << "1";
+		  humanHaveShoot = false;
+	  }
+	  else {
+		  m_vecTarget.push_back(0); // La classe est négative.  Ne tire pas 
+		  datasetFile << "0";
+	  }
+
+	  datasetFile << endl;
+	  datasetFile.close();
   }
 }
 
@@ -387,6 +433,7 @@ void Raven_Bot::ChangeWeapon(unsigned int type)
 //-----------------------------------------------------------------------------
 void Raven_Bot::FireWeapon(Vector2D pos)
 {
+	humanHaveShoot = true;
   m_pWeaponSys->ShootAt(pos);
 }
 

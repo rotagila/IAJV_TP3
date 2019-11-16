@@ -122,6 +122,13 @@ private:
   //the buffer for the transformed vertices
   std::vector<Vector2D>              m_vecBotVBTrans;
 
+  // Apprentissage :
+  // donnée à enregistrer décrivant une situation de comportement de l'agent 
+  std::vector<double> m_vecObservation; // distance-target, visibilite, quantite-arme, type arme, son niveau de vie
+  std::vector<double> m_vecTarget; // classes sous forme d'un vecteur de sortie.
+
+  bool humanHaveShoot;
+
 
   //bots shouldn't be copied, only created or respawned
   Raven_Bot(const Raven_Bot&);
