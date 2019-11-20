@@ -26,7 +26,11 @@
 #include "goals/Goal_Think.h"
 #include "goals/Raven_Goal_Types.h"
 
+#include "Debug/DebugConsole.h"
 
+#include <iostream>
+#include <fstream>
+#include <string>
 
 //uncomment to write object creation/deletion to debug console
 //#define  LOG_CREATIONAL_STUFF
@@ -43,6 +47,9 @@ Raven_Game::Raven_Game():m_pSelectedBot(NULL),
 {
   //load in the default map
   LoadMap(script->GetString("StartMap"));
+
+  // Fill the training set with a specified number of observations from a dataset file
+  FillTrainingSetFrom("datasetfile.csv", 10);
 }
 
 
@@ -55,6 +62,88 @@ Raven_Game::~Raven_Game()
   delete m_pMap;
   
   delete m_pGraveMarkers;
+}
+
+void Raven_Game::FillTrainingSetFrom(string datasetFilename, int instancesCount)
+{
+	trainingSet = CData();
+
+	ifstream datasetFile;
+	string currentLine;
+	datasetFile.open(datasetFilename, ios::in);
+
+	if (datasetFile.is_open())
+	{
+		// Count the number of line the in the file
+		long number_of_lines;
+		for (number_of_lines = 0; getline(datasetFile, currentLine); ++number_of_lines)
+			;
+
+		// a vector to keep all the indices: 0 to number_of_lines
+		vector<int> line_indices(number_of_lines);
+		for (int i = 0; i < number_of_lines; i++) {
+			line_indices[i] = i;
+		}
+
+		// shuffle the indices
+		std::random_shuffle(begin(line_indices), end(line_indices));
+		
+		// Reset the file to start from the beginning
+		datasetFile.clear();
+		datasetFile.seekg(0, datasetFile.beg);
+
+		string delimiter = ",";
+
+		int line_number = 0;
+		while (getline(datasetFile, currentLine)) {
+			for (int i = 0; i < instancesCount; ++i) {
+				if (line_number == line_indices[i]) {
+					//std::cout << currentLine << endl;
+					debug_con << currentLine << "";
+
+					int pos = 0;
+					std::string token;
+
+					vector<double> inputValues = vector<double>();
+					// While we can find a delimiter in the line
+					while ((pos = currentLine.find(delimiter)) != std::string::npos) {
+						token = currentLine.substr(0, pos);
+						
+						double value = atof(token.c_str());
+						debug_con << value << "";
+						inputValues.push_back(value);
+						currentLine.erase(0, pos + delimiter.length());
+
+					}
+					vector<double> outputValues = vector<double>();
+					outputValues.push_back(atof(currentLine.c_str()));
+					// add this line to the training set
+					this->AddData(inputValues, outputValues);
+				}
+			}
+			++line_number;
+		}
+	} else {
+		debug_con << "Couldn't open dataset with name '" << datasetFilename << "'";
+	}
+}
+
+bool Raven_Game::AddData(vector<double>& data, vector<double>& targets)
+{
+	if (data.size() > 0 && targets.size() > 0) {
+
+		if (trainingSet.GetInputNb() <= 0)
+			trainingSet = CData(data.size(), targets.size());
+
+		if (data.size() == trainingSet.GetInputNb() && targets.size() == trainingSet.GetTargetsNb()) {
+
+			trainingSet.AddData(data, targets);
+			return true;
+		}
+	}
+
+	return false;
+
 }
 
 

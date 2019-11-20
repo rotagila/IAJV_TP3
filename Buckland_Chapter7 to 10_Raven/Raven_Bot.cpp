@@ -189,6 +189,7 @@ void Raven_Bot::Update()
 	  m_vecObservation.push_back(m_pWeaponSys->GetAmmoRemainingForWeapon(m_pWeaponSys->GetCurrentWeapon()->GetType())); // add remaining ammo
 	  m_vecObservation.push_back(m_pWeaponSys->GetCurrentWeapon()->GetType()); // add current weapon type
 	  m_vecObservation.push_back((Health())); // add current remaining health
+	  m_vecObservation.push_back(m_pTargSys->GetTarget()->Health()); // add current target remaining heatlh
 
 	  ofstream datasetFile;
 	  datasetFile.open("datasetfile.csv", ios::app);

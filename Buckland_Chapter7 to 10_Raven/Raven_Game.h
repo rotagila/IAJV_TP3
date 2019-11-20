@@ -26,6 +26,8 @@
 #include "Raven_Bot.h"
 #include "navigation/pathmanager.h"
 
+#include "neuralnetwork/CData.h"
+
 
 class BaseGameEntity;
 class Raven_Projectile;
@@ -80,8 +82,14 @@ private:
   //must be notified so that they can remove any references to that bot from
   //their memory
   void NotifyAllBotsOfRemoval(Raven_Bot* pRemovedBot)const;
+
+  // Jeu d'entraînement
+  CData trainingSet;
   
 public:
+
+	void FillTrainingSetFrom(string datasetFilename, int instancesCount);
+	bool Raven_Game::AddData(vector<double>& data, vector<double>& targets);
   
   Raven_Game();
   ~Raven_Game();
