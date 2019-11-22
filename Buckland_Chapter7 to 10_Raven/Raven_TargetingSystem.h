@@ -66,6 +66,9 @@ public:
 
   //sets the target pointer to null
   void       ClearTarget(){m_pCurrentTarget=0;}
+
+  //sets the target pointer to a new one, called when the player ask for a target
+  void       SetTarget(Raven_Bot* target);
 };
 
 

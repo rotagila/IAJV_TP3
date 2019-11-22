@@ -279,7 +279,14 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
       return true;
     }
 
-
+  case Msg_ThisIsYourNewTarget:
+  {
+	  Raven_Bot* pTargetBot = (Raven_Bot*)msg.ExtraInfo;
+	  if (isFollower() && !isAlly(pTargetBot)) {
+		  GetTargetSys()->SetTarget(pTargetBot);
+	  }
+	  return true;
+  }
   default: return false;
   }
 }

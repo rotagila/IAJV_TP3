@@ -541,6 +541,11 @@ void Raven_Game::ClickLeftMouseButton(POINTS p)
   if (m_pSelectedBot && m_pSelectedBot->isPossessed())
   {
     m_pSelectedBot->FireWeapon(POINTStoVector(p));
+	Raven_Bot* target = NULL;
+	target = GetBotAtPosition(POINTStoVector(p));
+	if (target != NULL) {
+		NotifyFollowersNewTarget(target);
+	}
   }
 }
 
@@ -855,4 +860,21 @@ void Raven_Game::Render()
       gdi->TextAtPos(GetClientCursorPosition(), "Queuing");
     }
   }
+}
+
+
+//given a target, ask all the followers to try to kill it
+void Raven_Game::NotifyFollowersNewTarget(Raven_Bot* new_target) {
+	std::list<Raven_Bot*>::const_iterator curBot = m_Bots.begin();
+	for (curBot; curBot != m_Bots.end(); ++curBot)
+	{
+		if ((*curBot)->isFollower())
+		{
+			Dispatcher->DispatchMsg(SEND_MSG_IMMEDIATELY,
+				SENDER_ID_IRRELEVANT,
+				(*curBot)->ID(),
+				Msg_ThisIsYourNewTarget,
+				new_target);
+		}
+	}
 }

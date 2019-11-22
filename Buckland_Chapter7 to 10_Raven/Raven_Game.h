@@ -170,7 +170,11 @@ public:
 
   
   void  TagRaven_BotsWithinViewRange(BaseGameEntity* pRaven_Bot, double range)
-              {TagNeighbors(pRaven_Bot, m_Bots, range);}  
+              {TagNeighbors(pRaven_Bot, m_Bots, range);}
+
+  //given a target, ask all the followers to try to kill it
+  void NotifyFollowersNewTarget(Raven_Bot* new_target);
+
 };
 
 

@@ -68,3 +68,9 @@ double Raven_TargetingSystem::GetTimeTargetHasBeenOutOfView()const
 {
   return m_pOwner->GetSensoryMem()->GetTimeOpponentHasBeenOutOfView(m_pCurrentTarget);
 }
+
+void Raven_TargetingSystem::SetTarget(Raven_Bot* target) {
+	//the raven shouldn't try to kill itself
+	if(target != m_pOwner)
+		m_pCurrentTarget = target;
+}
