@@ -62,6 +62,9 @@ private:
   //if true a bot is removed from the game
   bool                             m_bRemoveABot;
 
+  //if true a follower bot is removed from the game
+  bool                             m_bRemoveAFollower;
+
   //when a bot is killed a "grave" is displayed for a few seconds. This
   //class manages the graves
   GraveMarkers*                    m_pGraveMarkers;
@@ -93,7 +96,7 @@ public:
   //loads an environment from a file
   bool LoadMap(const std::string& FileName); 
 
-  void AddBots(unsigned int NumBotsToAdd);
+  void AddBots(unsigned int NumBotsToAdd, bool isFollower = false);
   void AddRocket(Raven_Bot* shooter, Vector2D target);
   void AddRailGunSlug(Raven_Bot* shooter, Vector2D target);
   void AddShotGunPellet(Raven_Bot* shooter, Vector2D target);
@@ -101,6 +104,11 @@ public:
 
   //removes the last bot to be added
   void RemoveBot();
+  //removes the last follower added
+  void RemoveFollower();
+
+  //return a list of Followers
+  std::list<Raven_Bot*> getFollowers();
 
   //returns true if a bot of size BoundingRadius cannot move from A to B
   //without bumping into world geometry

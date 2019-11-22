@@ -117,6 +117,9 @@ private:
   //set to true when a human player takes over control of the bot
   bool                               m_bPossessed;
 
+  //set to true when the bot is a "follower of the human Player", false otherwise
+  bool                               m_bFollower;
+
   //a vertex buffer containing the bot's geometry
   std::vector<Vector2D>              m_vecBotVB;
   //the buffer for the transformed vertices
@@ -168,6 +171,7 @@ public:
   bool          isDead()const{return m_Status == dead;}
   bool          isAlive()const{return m_Status == alive;}
   bool          isSpawning()const{return m_Status == spawning;}
+  inline bool   isFollower()const { return m_bFollower; }
   
   void          SetSpawning(){m_Status = spawning;}
   void          SetDead(){m_Status = dead;}
@@ -186,6 +190,8 @@ public:
   void          ChangeWeapon(unsigned int type);
   void          TakePossession();
   void          Exorcise();
+  void			SetFollow() { m_bFollower = true; }
+  void			SetUnFollow() { m_bFollower = false; }
 
   //spawns the bot at the given position
   void          Spawn(Vector2D pos);

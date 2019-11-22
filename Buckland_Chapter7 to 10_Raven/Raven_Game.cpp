@@ -176,7 +176,30 @@ void Raven_Game::Update()
 
   //update the triggers
   m_pMap->UpdateTriggerSystem(m_Bots);
+  if (m_bRemoveAFollower)
+  {
+	  if (!m_Bots.empty())
+	  {
+		  Raven_Bot* pBot = nullptr;
+		  //looking for a follower
+		  for (auto it = m_Bots.rbegin(); it != m_Bots.rend(); ++it) {
+			  Raven_Bot* bot = *it;
+			  if (bot->isFollower()) {
+				  pBot = bot;
+				  break;
+			  }
+		  }
+		  if (pBot != nullptr) {
+			  if (pBot == m_pSelectedBot)m_pSelectedBot = 0;
+			  NotifyAllBotsOfRemoval(pBot);
+			  m_Bots.remove(pBot);
+			  delete pBot;
+			  pBot = 0;
+		  }
+	  }
 
+	  m_bRemoveAFollower = false;
+  }
   //if the user has requested that the number of bots be decreased, remove
   //one
   if (m_bRemoveABot)
@@ -184,9 +207,15 @@ void Raven_Game::Update()
     if (!m_Bots.empty())
     {
       Raven_Bot* pBot = m_Bots.back();
-      if (pBot == m_pSelectedBot)m_pSelectedBot=0;
+	  if (pBot == m_pSelectedBot) {
+		  m_pSelectedBot = 0;
+		  std::list<Raven_Bot*> followers = getFollowers();
+		  for (Raven_Bot* fol : followers) {
+			  fol->SetUnFollow();
+		  }
+	  }
       NotifyAllBotsOfRemoval(pBot);
-      delete m_Bots.back();
+	  delete m_Bots.back();
       m_Bots.remove(pBot);
       pBot = 0;
     }
@@ -244,13 +273,14 @@ bool Raven_Game::AttemptToAddBot(Raven_Bot* pBot)
 //
 //  Adds a bot and switches on the default steering behavior
 //-----------------------------------------------------------------------------
-void Raven_Game::AddBots(unsigned int NumBotsToAdd)
+void Raven_Game::AddBots(unsigned int NumBotsToAdd, bool isFollower)
 { 
   while (NumBotsToAdd--)
   {
     //create a bot. (its position is irrelevant at this point because it will
     //not be rendered until it is spawned)
     Raven_Bot* rb = new Raven_Bot(this, Vector2D());
+	if (isFollower) rb->SetFollow();
 
     //switch the default steering behaviors on
     rb->GetSteering()->WallAvoidanceOn();
@@ -294,6 +324,32 @@ void Raven_Game::NotifyAllBotsOfRemoval(Raven_Bot* pRemovedBot)const
 void Raven_Game::RemoveBot()
 {
   m_bRemoveABot = true;
+}
+
+//-------------------------------RemoveFollower ------------------------------------
+//
+//  removes the last follower to be added from the game
+//-----------------------------------------------------------------------------
+void Raven_Game::RemoveFollower()
+{
+	m_bRemoveAFollower = true;
+}
+
+//-------------------------------getFollowers ------------------------------------
+//
+//		return a list of Followers
+//-----------------------------------------------------------------------------
+std::list<Raven_Bot*> Raven_Game::getFollowers()
+{
+	std::list<Raven_Bot*> res;
+	//looking for a follower
+	for (auto it = m_Bots.begin(); it != m_Bots.end(); ++it) {
+		Raven_Bot* bot = *it;
+		if (bot->isFollower()) {
+			res.push_back(bot);
+		}
+	}
+	return res;
 }
 
 //--------------------------- AddBolt -----------------------------------------
@@ -411,7 +467,13 @@ bool Raven_Game::LoadMap(const std::string& filename)
 //-----------------------------------------------------------------------------
 void Raven_Game::ExorciseAnyPossessedBot()
 {
-  if (m_pSelectedBot) m_pSelectedBot->Exorcise();
+	if (m_pSelectedBot) {
+		m_pSelectedBot->Exorcise();
+		std::list<Raven_Bot*> followers = getFollowers();
+		for (Raven_Bot* fol : followers) {
+			fol->SetUnFollow();
+		}
+	}
 }
 
 

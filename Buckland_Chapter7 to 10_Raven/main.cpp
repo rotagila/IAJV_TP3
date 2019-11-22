@@ -171,7 +171,17 @@ LRESULT CALLBACK WindowProc (HWND   hwnd,
 
            g_pRaven->RemoveBot(); break;
            
+		 case VK_LEFT:
+			 if(g_pRaven->PossessedBot()) 
+				g_pRaven->RemoveFollower();
+			 std::cout << "a new foe leaves the battlefield :(" << std::endl;
+			 break;
 
+		 case VK_RIGHT:
+			 if (g_pRaven->PossessedBot())
+				g_pRaven->AddBots(1,true);
+			 std::cout << "a new foe enters the battlefield :)" << std::endl;
+			 break;
         }
       }
 
