@@ -228,6 +228,9 @@ public:
   Raven_WeaponSystem* const          GetWeaponSys()const{return m_pWeaponSys;}
   Raven_SensoryMemory* const         GetSensoryMem()const{return m_pSensoryMem;}
 
+  //return if rb is considered a friend of current bot
+  //example : followers don't shoot themselves nor the player
+  bool isAlly(Raven_Bot* rb);
 
 };
 

@@ -596,6 +596,15 @@ double Raven_Bot::GetPrecision(double DistToTarget, double Velocity, double Targ
 	return m_dLastPrecisionScore;
 }
 
+bool Raven_Bot::isAlly(Raven_Bot* rb) {
+	if (rb == this) return true; //don't kill yourself ?
+	if (isFollower() || isPossessed()) {
+		if (rb->isFollower() || rb->isPossessed())
+			return true; //the team of the player and followers
+	}
+	return false; //default
+}
+
 //-------------------------  InitializeFuzzyModule ----------------------------
 //
 //  set up some fuzzy variables and rules
