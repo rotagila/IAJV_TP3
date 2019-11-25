@@ -54,8 +54,8 @@ Raven_Game::Raven_Game():m_pSelectedBot(NULL),
   // Fill the training set with a specified number of observations from a dataset file
   FillTrainingSetFrom("datasetfile.csv", 3000);
 
+  debug_con << "Entrainement en cours..." << "";
   learningModel = CNeuralNet(trainingSet.GetInputNb(), trainingSet.GetTargetsNb(), 12, 0.75);
-
   learningModel.Train(&trainingSet);
 
   AddBots(1, true);
@@ -92,7 +92,7 @@ void Raven_Game::FillTrainingSetFrom(string datasetFilename, int instancesCount)
 		if (instancesCount > number_of_lines) {
 			instancesCount = number_of_lines / 3;
 		}
-
+		debug_con << "Récupération de " << instancesCount << " observations" << "";
 		// a vector to keep all the indices: 0 to number_of_lines
 		vector<int> line_indices(number_of_lines);
 		for (int i = 0; i < number_of_lines; i++) {
@@ -107,6 +107,8 @@ void Raven_Game::FillTrainingSetFrom(string datasetFilename, int instancesCount)
 		datasetFile.seekg(0, datasetFile.beg);
 
 		string delimiter = ",";
+
+		int shotObservationCount = 0;
 
 		int line_number = 0;
 		while (getline(datasetFile, currentLine)) {
@@ -130,14 +132,21 @@ void Raven_Game::FillTrainingSetFrom(string datasetFilename, int instancesCount)
 
 					}
 					vector<double> outputValues = vector<double>();
-					outputValues.push_back(atof(currentLine.c_str()));
+					double outputValue = atof(currentLine.c_str());
+					debug_con << outputValue << "";
+					if (outputValue == 1) {
+						shotObservationCount++;
+					}
+					outputValues.push_back(outputValue);
 					// add this line to the training set
 					this->AddData(inputValues, outputValues);
-					debug_con << "ajout dans le training set " << line_number << "";
+					debug_con << "ajout dans le training set de l'observation " << line_number << "";
 				}
 			}
 			++line_number;
 		}
+		debug_con << "Le jeu d'entraînement contient " << shotObservationCount << " observation de tir " << "";
+		debug_con << "et " << instancesCount - shotObservationCount << " observation de non tir" << "";
 	} else {
 		debug_con << "Couldn't open dataset with name '" << datasetFilename << "'";
 	}

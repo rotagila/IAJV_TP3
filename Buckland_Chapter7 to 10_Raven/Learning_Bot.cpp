@@ -101,6 +101,7 @@ void Learning_Bot::Update()
 			m_vecObservation.push_back(m_pWeaponSys->GetAmmoRemainingForWeapon(m_pWeaponSys->GetCurrentWeapon()->GetType()));
 			m_vecObservation.push_back(m_pWeaponSys->GetCurrentWeapon()->GetType());
 			m_vecObservation.push_back((Health()));
+			m_vecObservation.push_back(m_pTargSys->GetTarget()->Health());
 
 
 			std::vector<double> output = modeleAppris.Update(m_vecObservation);

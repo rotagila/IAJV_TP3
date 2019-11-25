@@ -122,6 +122,7 @@ Raven_Bot::~Raven_Bot()
 //-----------------------------------------------------------------------------
 void Raven_Bot::Spawn(Vector2D pos)
 {
+	srand(time(0));
     SetAlive();
     m_pBrain->RemoveAllSubgoals();
     m_pTargSys->ClearTarget();
@@ -180,36 +181,52 @@ void Raven_Bot::Update()
 
   // if the bot is possessed by a human player
   if (isPossessed() && m_pTargSys->isTargetPresent()) {
+	  bool shouldAddObservation = true;
+	  bool currentObservationIsAShot = false;
+
 	  debug_con << "Getting observations from bot " << this->ID() << "";
 	  m_vecObservation.clear();
 	  m_vecTarget.clear();
 
-	  m_vecObservation.push_back((Pos().Distance(m_pTargSys->GetTarget()->Pos()))); // add distance to target observation
-	  m_vecObservation.push_back(m_pTargSys->isTargetWithinFOV()); // add if the target is in FOV
-	  m_vecObservation.push_back(m_pWeaponSys->GetAmmoRemainingForWeapon(m_pWeaponSys->GetCurrentWeapon()->GetType())); // add remaining ammo
-	  m_vecObservation.push_back(m_pWeaponSys->GetCurrentWeapon()->GetType()); // add current weapon type
-	  m_vecObservation.push_back((Health())); // add current remaining health
-	  m_vecObservation.push_back(m_pTargSys->GetTarget()->Health()); // add current target remaining heatlh
-
-	  ofstream datasetFile;
-	  datasetFile.open("datasetfile.csv", ios::app);
-	  for (double observation : m_vecObservation) {
-		  datasetFile << observation << ",";
-	  }
-
 	  // if the human player shot
 	  if (humanHaveShoot) {
 		  m_vecTarget.push_back(1); // la classe de l'observation est positive. Il tire
-		  datasetFile << "1";
+		  currentObservationIsAShot = true;
 		  humanHaveShoot = false;
+		  shouldAddObservation = true;
 	  }
 	  else {
-		  m_vecTarget.push_back(0); // La classe est négative.  Ne tire pas 
-		  datasetFile << "0";
+		  m_vecTarget.push_back(0); // La classe est négative.  Ne tire pas
+		  if (rand() % 10 > 3) {
+			  // ajoute une chance aléatoire de ne PAS ajouter une observation où on ne tire
+			  // C'est pour éviter d'avoir trop d'observations de non-tir
+			  shouldAddObservation = false;
+		  }
 	  }
 
-	  datasetFile << endl;
-	  datasetFile.close();
+	  if (shouldAddObservation) {
+		  m_vecObservation.push_back((Pos().Distance(m_pTargSys->GetTarget()->Pos()))); // add distance to target observation
+		  m_vecObservation.push_back(m_pTargSys->isTargetWithinFOV()); // add if the target is in FOV
+		  m_vecObservation.push_back(m_pWeaponSys->GetAmmoRemainingForWeapon(m_pWeaponSys->GetCurrentWeapon()->GetType())); // add remaining ammo
+		  m_vecObservation.push_back(m_pWeaponSys->GetCurrentWeapon()->GetType()); // add current weapon type
+		  m_vecObservation.push_back((Health())); // add current remaining health
+		  m_vecObservation.push_back(m_pTargSys->GetTarget()->Health()); // add current target remaining heatlh
+
+		  ofstream datasetFile;
+		  datasetFile.open("datasetfile.csv", ios::app);
+		  for (double observation : m_vecObservation) {
+			  datasetFile << observation << ",";
+		  }
+
+		  if (currentObservationIsAShot) {
+			  datasetFile << "1";
+		  }
+		  else {
+			  datasetFile << "0";
+		  }
+		  datasetFile << endl;
+		  datasetFile.close();
+	  }
   }
 }
 
