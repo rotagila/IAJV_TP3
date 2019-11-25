@@ -48,8 +48,17 @@ Raven_Game::Raven_Game():m_pSelectedBot(NULL),
   //load in the default map
   LoadMap(script->GetString("StartMap"));
 
+  // Initialize the training set
+  trainingSet = CData();
+
   // Fill the training set with a specified number of observations from a dataset file
-  FillTrainingSetFrom("datasetfile.csv", 10);
+  FillTrainingSetFrom("datasetfile.csv", 3000);
+
+  learningModel = CNeuralNet(trainingSet.GetInputNb(), trainingSet.GetTargetsNb(), 12, 0.75);
+
+  learningModel.Train(&trainingSet);
+
+  AddBots(1, true);
 }
 
 
@@ -79,6 +88,11 @@ void Raven_Game::FillTrainingSetFrom(string datasetFilename, int instancesCount)
 		for (number_of_lines = 0; getline(datasetFile, currentLine); ++number_of_lines)
 			;
 
+		// If there isn't enough observations to fill the dataset with, fill with 1/3 of the observations
+		if (instancesCount > number_of_lines) {
+			instancesCount = number_of_lines / 3;
+		}
+
 		// a vector to keep all the indices: 0 to number_of_lines
 		vector<int> line_indices(number_of_lines);
 		for (int i = 0; i < number_of_lines; i++) {
@@ -99,7 +113,7 @@ void Raven_Game::FillTrainingSetFrom(string datasetFilename, int instancesCount)
 			for (int i = 0; i < instancesCount; ++i) {
 				if (line_number == line_indices[i]) {
 					//std::cout << currentLine << endl;
-					debug_con << currentLine << "";
+					//debug_con << currentLine << "";
 
 					int pos = 0;
 					std::string token;
@@ -110,7 +124,7 @@ void Raven_Game::FillTrainingSetFrom(string datasetFilename, int instancesCount)
 						token = currentLine.substr(0, pos);
 						
 						double value = atof(token.c_str());
-						debug_con << value << "";
+						/*debug_con << value << "";*/
 						inputValues.push_back(value);
 						currentLine.erase(0, pos + delimiter.length());
 
@@ -119,6 +133,7 @@ void Raven_Game::FillTrainingSetFrom(string datasetFilename, int instancesCount)
 					outputValues.push_back(atof(currentLine.c_str()));
 					// add this line to the training set
 					this->AddData(inputValues, outputValues);
+					debug_con << "ajout dans le training set " << line_number << "";
 				}
 			}
 			++line_number;
@@ -333,13 +348,21 @@ bool Raven_Game::AttemptToAddBot(Raven_Bot* pBot)
 //
 //  Adds a bot and switches on the default steering behavior
 //-----------------------------------------------------------------------------
-void Raven_Game::AddBots(unsigned int NumBotsToAdd)
+void Raven_Game::AddBots(unsigned int NumBotsToAdd, bool isLearningBot)
 { 
   while (NumBotsToAdd--)
   {
     //create a bot. (its position is irrelevant at this point because it will
     //not be rendered until it is spawned)
-    Raven_Bot* rb = new Raven_Bot(this, Vector2D());
+    //Raven_Bot* rb = new Raven_Bot(this, Vector2D());
+	  Raven_Bot* rb;
+	  if (!isLearningBot)
+		  rb = new Raven_Bot(this, Vector2D());
+	  else
+	  {
+		  rb = new Learning_Bot(this, Vector2D());
+		  debug_con << "Instanciation d'un bot apprenant" << rb->ID() << "";
+	  }
 
     //switch the default steering behaviors on
     rb->GetSteering()->WallAvoidanceOn();

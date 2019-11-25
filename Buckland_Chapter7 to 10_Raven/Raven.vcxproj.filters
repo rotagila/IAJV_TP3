@@ -274,6 +274,9 @@
     <ClCompile Include="neuralnetwork\CNeuralNet.cpp">
       <Filter>Game</Filter>
     </ClCompile>
+    <ClCompile Include="Learning_Bot.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Raven_Bot.h">
@@ -614,6 +617,7 @@
     </ClInclude>
     <ClInclude Include="neuralnetwork\CData.h" />
     <ClInclude Include="neuralnetwork\CNeuralNet.h" />
+    <ClInclude Include="Learning_Bot.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Params.lua">

@@ -24,9 +24,11 @@
 #include "misc/utils.h"
 #include "game/EntityFunctionTemplates.h"
 #include "Raven_Bot.h"
+#include "Learning_Bot.h"
 #include "navigation/pathmanager.h"
 
 #include "neuralnetwork/CData.h"
+#include "neuralnetwork/CNeuralNet.h"
 
 
 class BaseGameEntity;
@@ -85,6 +87,9 @@ private:
 
   // Jeu d'entraînement
   CData trainingSet;
+
+  // Modèle appris
+  CNeuralNet learningModel;
   
 public:
 
@@ -101,7 +106,7 @@ public:
   //loads an environment from a file
   bool LoadMap(const std::string& FileName); 
 
-  void AddBots(unsigned int NumBotsToAdd);
+  void AddBots(unsigned int NumBotsToAdd, bool isLearningBot = false);
   void AddRocket(Raven_Bot* shooter, Vector2D target);
   void AddRailGunSlug(Raven_Bot* shooter, Vector2D target);
   void AddShotGunPellet(Raven_Bot* shooter, Vector2D target);
@@ -161,6 +166,7 @@ public:
   Raven_Bot*  PossessedBot()const{return m_pSelectedBot;}
   void        ChangeWeaponOfPossessedBot(unsigned int weapon)const;
 
+  CNeuralNet getModeleApprentissage() { return learningModel; }
   
   const Raven_Map* const                   GetMap()const{return m_pMap;}
   Raven_Map* const                         GetMap(){return m_pMap;}
