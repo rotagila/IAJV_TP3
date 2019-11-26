@@ -65,7 +65,7 @@ Raven_Game::~Raven_Game()
 void Raven_Game::Clear()
 {
 #ifdef LOG_CREATIONAL_STUFF
-    debug_con << "\n------------------------------ Clearup -------------------------------" <<"";
+	debug_con << "\n------------------------------ Clearup -------------------------------" <<"";
 #endif
 
   //delete the bots
