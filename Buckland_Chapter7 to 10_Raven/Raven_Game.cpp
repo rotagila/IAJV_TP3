@@ -37,6 +37,7 @@
 Raven_Game::Raven_Game():m_pSelectedBot(NULL),
                          m_bPaused(false),
                          m_bRemoveABot(false),
+						 m_bRemoveAFollower(false),
                          m_pMap(NULL),
                          m_pPathManager(NULL),
                          m_pGraveMarkers(NULL)
@@ -190,7 +191,10 @@ void Raven_Game::Update()
 			  }
 		  }
 		  if (pBot != nullptr) {
-			  if (pBot == m_pSelectedBot)m_pSelectedBot = 0;
+			  if (pBot == m_pSelectedBot) {
+				  m_pSelectedBot->Exorcise();
+				  m_pSelectedBot = 0;
+			  }
 			  NotifyAllBotsOfRemoval(pBot);
 			  m_Bots.remove(pBot);
 			  delete pBot;
@@ -208,11 +212,8 @@ void Raven_Game::Update()
     {
       Raven_Bot* pBot = m_Bots.back();
 	  if (pBot == m_pSelectedBot) {
+		  m_pSelectedBot->Exorcise();
 		  m_pSelectedBot = 0;
-		  std::list<Raven_Bot*> followers = getFollowers();
-		  for (Raven_Bot* fol : followers) {
-			  fol->SetUnFollow();
-		  }
 	  }
       NotifyAllBotsOfRemoval(pBot);
 	  delete m_Bots.back();
@@ -469,10 +470,6 @@ void Raven_Game::ExorciseAnyPossessedBot()
 {
 	if (m_pSelectedBot) {
 		m_pSelectedBot->Exorcise();
-		std::list<Raven_Bot*> followers = getFollowers();
-		for (Raven_Bot* fol : followers) {
-			fol->SetUnFollow();
-		}
 	}
 }
 

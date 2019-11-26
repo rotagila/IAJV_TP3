@@ -119,6 +119,10 @@ private:
 
   //set to true when the bot is a "follower of the human Player", false otherwise
   bool                               m_bFollower;
+  //represent a target that the follower must kill before
+  //having normal behaviour, the target is defined by
+  //the player
+  Raven_Bot*                         m_pTargetAsFollower;
 
   //a vertex buffer containing the bot's geometry
   std::vector<Vector2D>              m_vecBotVB;
@@ -142,6 +146,9 @@ public:
   
   Raven_Bot(Raven_Game* world, Vector2D pos);
   virtual ~Raven_Bot();
+
+  //called by a follower to drop its weapon near itself
+  void DropWeapon();
 
   //the usual suspects
   void         Render();
@@ -172,7 +179,7 @@ public:
   bool          isAlive()const{return m_Status == alive;}
   bool          isSpawning()const{return m_Status == spawning;}
   inline bool   isFollower()const { return m_bFollower; }
-  
+
   void          SetSpawning(){m_Status = spawning;}
   void          SetDead(){m_Status = dead;}
   void          SetAlive(){m_Status = alive;}
@@ -216,7 +223,6 @@ public:
   bool          canStepRight(Vector2D& PositionOfStep)const;
   bool          canStepForward(Vector2D& PositionOfStep)const;
   bool          canStepBackward(Vector2D& PositionOfStep)const;
-
   
   Raven_Game* const                  GetWorld(){return m_pWorld;} 
   Raven_Steering* const              GetSteering(){return m_pSteering;}
@@ -230,7 +236,7 @@ public:
 
   //return if rb is considered a friend of current bot
   //example : followers don't shoot themselves nor the player
-  bool isAlly(Raven_Bot* rb);
+  bool isAlly(Raven_Bot* rb) const;
 
 };
 

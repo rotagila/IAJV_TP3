@@ -47,6 +47,7 @@ Raven_Bot::Raven_Bot(Raven_Game* world,Vector2D pos):
                  m_Status(spawning),
                  m_bPossessed(false),
 				 m_bFollower(false),
+				 m_pTargetAsFollower(NULL),
                  m_dFieldOfView(DegsToRads(script->GetDouble("Bot_FOV")))
            
 {
@@ -137,10 +138,11 @@ void Raven_Bot::Update()
   {           
     //examine all the opponents in the bots sensory memory and select one
     //to be the current target
-    if (m_pTargetSelectionRegulator->isReady())
-    {      
-      m_pTargSys->Update();
-    }
+	if(!isFollower() || m_pTargetAsFollower == NULL)
+		if (m_pTargetSelectionRegulator->isReady())
+		{      
+		m_pTargSys->Update();
+		}
 
     //appraise and arbitrate between all possible high level goals
     if (m_pGoalArbitrationRegulator->isReady())
@@ -265,8 +267,10 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
 
   case Msg_UserHasRemovedBot:
     {
-
       Raven_Bot* pRemovedBot = (Raven_Bot*)msg.ExtraInfo;
+
+	  if(pRemovedBot == m_pTargetAsFollower)
+		  m_pTargetAsFollower = NULL;
 
       GetSensoryMem()->RemoveBotFromMemory(pRemovedBot);
 
@@ -284,6 +288,7 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
 	  Raven_Bot* pTargetBot = (Raven_Bot*)msg.ExtraInfo;
 	  if (isFollower() && !isAlly(pTargetBot)) {
 		  GetTargetSys()->SetTarget(pTargetBot);
+		  m_pTargetAsFollower = pTargetBot;
 	  }
 	  return true;
   }
@@ -347,6 +352,7 @@ void Raven_Bot::ReduceHealth(unsigned int val)
   if (m_iHealth <= 0)
   {
     SetDead();
+	if(isFollower()) DropWeapon();
   }
 
   m_bHit = true;
@@ -374,7 +380,11 @@ void Raven_Bot::TakePossession()
 void Raven_Bot::Exorcise()
 {
   m_bPossessed = false;
-
+  //all the "team" is dismantled
+  std::list<Raven_Bot*> followers = m_pWorld->getFollowers();
+  for (Raven_Bot* fol : followers) {
+	  fol->SetUnFollow();
+  }
   //when the player is exorcised then the bot should resume normal service
   m_pBrain->AddGoal_Explore();
   
@@ -508,7 +518,11 @@ void Raven_Bot::Render()
   gdi->ClosedShape(m_vecBotVBTrans);
   
   //draw the head
-  gdi->BrownBrush();
+  if (isFollower())
+	gdi->BlueBrush();
+  else
+	  gdi->RedBrush();
+	//gdi->BrownBrush();
   gdi->Circle(Pos(), 6.0 * Scale().x);
 
 
@@ -603,7 +617,7 @@ double Raven_Bot::GetPrecision(double DistToTarget, double Velocity, double Targ
 	return m_dLastPrecisionScore;
 }
 
-bool Raven_Bot::isAlly(Raven_Bot* rb) {
+bool Raven_Bot::isAlly(Raven_Bot* rb) const {
 	if (rb == this) return true; //don't kill yourself ?
 	if (isFollower() || isPossessed()) {
 		if (rb->isFollower() || rb->isPossessed())
@@ -681,4 +695,12 @@ void Raven_Bot::InitializeFuzzyModule() {
 	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Low, Visibility_High), Precision_High);
 	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Low, Visibility_Medium), Precision_Medium);
 	m_FuzzyModule.AddRule(FzAND(Target_Far, Velocity_Low, Visibility_Low), Precision_Low);
+}
+
+
+//called by a follower to drop its weapon near itself
+void Raven_Bot::DropWeapon() {
+	int id_weapon = GetWeaponSys()->RemoveCurrentWeapon();
+	if(id_weapon != -1) //to make sure a valid weapon was dropped
+		GetWorld()->GetMap()->AddWeapon_Giver(id_weapon, this);
 }

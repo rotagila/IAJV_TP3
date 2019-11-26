@@ -25,11 +25,18 @@ private:
   //vrtex buffers for rocket shape
   std::vector<Vector2D>         m_vecRLVB;
   std::vector<Vector2D>         m_vecRLVBTrans;
+
+  //for weapons dropped by entities,
+  //the weaponGiver should work only once
+  bool m_bOneTimeUsage;
   
 public:
 
   //this type of trigger is created when reading a map file
   Trigger_WeaponGiver(std::ifstream& datafile);
+  //this one is created by followers_bot, it will be removed once used
+  Trigger_WeaponGiver(int id, double x, double y, 
+					  double r, int GraphNodeIndex);
 
   //if triggered, this trigger will call the PickupWeapon method of the
   //bot. PickupWeapon will instantiate a weapon of the appropriate type.

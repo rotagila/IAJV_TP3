@@ -14,6 +14,7 @@
 
 #include "Raven_UserOptions.h"
 
+#include "navigation/Raven_PathPlanner.h"
 
 //uncomment to write object creation/deletion to debug console
 #define  LOG_CREATIONAL_STUFF
@@ -161,6 +162,28 @@ void Raven_Map::AddWeapon_Giver(int type_of_weapon, std::ifstream& in)
 
   //register the entity 
   EntityMgr->RegisterEntity(wg);
+}
+
+void Raven_Map::AddWeapon_Giver(int type_of_weapon, Raven_Bot* source)
+{
+	Vector2D pos = source->Pos();
+	int nodeId = source->GetPathPlanner()->GetClosestNodeToPosition(pos);
+	Trigger_WeaponGiver* wg = new Trigger_WeaponGiver(BaseGameEntity::GetNextValidID(), 
+														pos.x, pos.y,
+														1, nodeId);
+
+	wg->SetEntityType(type_of_weapon);
+
+	//add it to the appropriate vectors
+	m_TriggerSystem.Register(wg);
+
+	//let the corresponding navgraph node point to this object
+	NavGraph::NodeType& node = m_pNavGraph->GetNode(wg->GraphNodeIndex());
+
+	node.SetExtraInfo(wg);
+
+	//register the entity 
+	EntityMgr->RegisterEntity(wg);
 }
 
 

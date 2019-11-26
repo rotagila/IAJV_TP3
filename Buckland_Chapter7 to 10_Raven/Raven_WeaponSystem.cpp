@@ -348,3 +348,19 @@ void Raven_WeaponSystem::RenderDesirabilities()const
     }
 }
 
+
+int Raven_WeaponSystem::RemoveCurrentWeapon() {
+	Raven_Weapon* w = GetCurrentWeapon();
+	if (w) {
+		int weapon_type = w->GetType();
+		if (weapon_type != type_blaster) {
+			m_WeaponMap[weapon_type] = 0;
+			SelectWeapon();
+			//ChangeWeapon(type_blaster);
+			delete w;
+			return weapon_type;
+		}
+	}
+	//no weapon removed
+	return -1;
+}

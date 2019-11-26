@@ -12,7 +12,8 @@
 
 Trigger_WeaponGiver::Trigger_WeaponGiver(std::ifstream& datafile):
       
-          Trigger_Respawning<Raven_Bot>(GetValueFromStream<int>(datafile))
+          Trigger_Respawning<Raven_Bot>(GetValueFromStream<int>(datafile)),
+	m_bOneTimeUsage(false)
 {
   Read(datafile);
 
@@ -33,14 +34,45 @@ Trigger_WeaponGiver::Trigger_WeaponGiver(std::ifstream& datafile):
   }
 }
 
+Trigger_WeaponGiver::Trigger_WeaponGiver(int id, double x, double y, 
+										double r, int GraphNodeIndex) :
+
+	Trigger_Respawning<Raven_Bot>(id),
+	m_bOneTimeUsage(true)
+{
+	SetPos(Vector2D(x, y));
+	SetBRadius(r);
+	SetGraphNodeIndex(GraphNodeIndex);
+	//create this trigger's region of fluence
+	AddCircularTriggerRegion(Pos(), script->GetDouble("DefaultGiverTriggerRange"));
+	SetRespawnDelay((unsigned int)(script->GetDouble("Weapon_RespawnDelay") * FrameRate));
+
+	//create the vertex buffer for the rocket shape
+	const int NumRocketVerts = 8;
+	const Vector2D rip[NumRocketVerts] = { Vector2D(0, 3),
+										 Vector2D(1, 2),
+										 Vector2D(1, 0),
+										 Vector2D(2, -2),
+										 Vector2D(-2, -2),
+										 Vector2D(-1, 0),
+										 Vector2D(-1, 2),
+										 Vector2D(0, 3) };
+
+	for (int i = 0; i < NumRocketVerts; ++i)
+	{
+		m_vecRLVB.push_back(rip[i]);
+	}
+}
+
 
 void Trigger_WeaponGiver::Try(Raven_Bot* pBot)
 {
   if (this->isActive() && this->isTouchingTrigger(pBot->Pos(), pBot->BRadius()))
   {
     pBot->GetWeaponSys()->AddWeapon(EntityType());
-
     Deactivate();
+	//for weapon dropped, the giver should removed once used
+	if (m_bOneTimeUsage) SetToBeRemovedFromGame();
   } 
 }
 
