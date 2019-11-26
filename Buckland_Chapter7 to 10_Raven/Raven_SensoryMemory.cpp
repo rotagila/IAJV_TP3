@@ -153,7 +153,10 @@ Raven_SensoryMemory::GetListOfRecentlySensedOpponents()const
     //if this bot has been updated in the memory recently, add to list
     if ( (CurrentTime - curRecord->second.fTimeLastSensed) <= m_dMemorySpan)
     {
-      opponents.push_back(curRecord->first);
+		//we finally check if the target is an ally or not
+		Raven_Bot* potential_target = curRecord->first;
+		if(!m_pOwner->isAlly(potential_target))
+			opponents.push_back(curRecord->first);
     }
   }
 

@@ -117,6 +117,13 @@ private:
   //set to true when a human player takes over control of the bot
   bool                               m_bPossessed;
 
+  //set to true when the bot is a "follower of the human Player", false otherwise
+  bool                               m_bFollower;
+  //represent a target that the follower must kill before
+  //having normal behaviour, the target is defined by
+  //the player
+  Raven_Bot*                         m_pTargetAsFollower;
+
   //a vertex buffer containing the bot's geometry
   std::vector<Vector2D>              m_vecBotVB;
   //the buffer for the transformed vertices
@@ -139,6 +146,9 @@ public:
   
   Raven_Bot(Raven_Game* world, Vector2D pos);
   virtual ~Raven_Bot();
+
+  //called by a follower to drop its weapon near itself
+  void DropWeapon();
 
   //the usual suspects
   void         Render();
@@ -168,7 +178,8 @@ public:
   bool          isDead()const{return m_Status == dead;}
   bool          isAlive()const{return m_Status == alive;}
   bool          isSpawning()const{return m_Status == spawning;}
-  
+  inline bool   isFollower()const { return m_bFollower; }
+
   void          SetSpawning(){m_Status = spawning;}
   void          SetDead(){m_Status = dead;}
   void          SetAlive(){m_Status = alive;}
@@ -186,6 +197,8 @@ public:
   void          ChangeWeapon(unsigned int type);
   void          TakePossession();
   void          Exorcise();
+  void			SetFollow() { m_bFollower = true; }
+  void			SetUnFollow() { m_bFollower = false; }
 
   //spawns the bot at the given position
   void          Spawn(Vector2D pos);
@@ -210,7 +223,6 @@ public:
   bool          canStepRight(Vector2D& PositionOfStep)const;
   bool          canStepForward(Vector2D& PositionOfStep)const;
   bool          canStepBackward(Vector2D& PositionOfStep)const;
-
   
   Raven_Game* const                  GetWorld(){return m_pWorld;} 
   Raven_Steering* const              GetSteering(){return m_pSteering;}
@@ -222,6 +234,9 @@ public:
   Raven_WeaponSystem* const          GetWeaponSys()const{return m_pWeaponSys;}
   Raven_SensoryMemory* const         GetSensoryMem()const{return m_pSensoryMem;}
 
+  //return if rb is considered a friend of current bot
+  //example : followers don't shoot themselves nor the player
+  bool isAlly(Raven_Bot* rb) const;
 
 };
 

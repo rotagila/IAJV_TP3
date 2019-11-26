@@ -348,3 +348,51 @@ void Raven_WeaponSystem::RenderDesirabilities()const
     }
 }
 
+
+int Raven_WeaponSystem::RemoveCurrentWeapon() {
+	Raven_Weapon* w = GetCurrentWeapon();
+	int weapon_type = type_blaster;
+	if (w) {
+		weapon_type = w->GetType();
+	}
+	//if main weapon is a blaster OR not selected
+	//a random not blaster weapon is selected instead
+	if (weapon_type == type_blaster) {
+		//count the nb of valid weapons
+		int count = 0;
+		WeaponMap::iterator curW;
+		for (curW = m_WeaponMap.begin(); curW != m_WeaponMap.end(); ++curW)
+		{
+			if(curW->second && curW->second->GetType() != type_blaster)
+				++count;
+		}
+		//nothing to do if there is no valid weapon appart from blaster
+		//otherwise, a random weapon is selected
+		if (count > 0) {
+			int weapon_to_drop = std::rand() % count;
+			for (curW = m_WeaponMap.begin(); curW != m_WeaponMap.end(); ++curW)
+			{
+				if (curW->second && curW->second->GetType() != type_blaster) {
+					if (weapon_to_drop == 0) {
+						w = curW->second;
+						weapon_type = w->GetType();
+						break;
+					}
+					else {
+						--weapon_to_drop;
+					}
+				}
+			}
+		}
+	}
+	//removes the weapon if it is not a blaster
+	if (weapon_type != type_blaster) {
+		m_WeaponMap[weapon_type] = 0;
+		SelectWeapon();
+		//ChangeWeapon(type_blaster);
+		delete w;
+		return weapon_type;
+	}
+	//no weapon removed
+	return -1;
+}

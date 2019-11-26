@@ -171,7 +171,17 @@ LRESULT CALLBACK WindowProc (HWND   hwnd,
 
            g_pRaven->RemoveBot(); break;
            
+		 case VK_LEFT:
+			 if(g_pRaven->PossessedBot() && 
+				 g_pRaven->PossessedBot()->isPossessed())
+				g_pRaven->RemoveFollower();
+			 break;
 
+		 case VK_RIGHT:
+			 if (g_pRaven->PossessedBot() &&
+				 g_pRaven->PossessedBot()->isPossessed())
+				g_pRaven->AddBots(1,true);
+			 break;
         }
       }
 

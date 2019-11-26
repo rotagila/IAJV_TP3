@@ -89,6 +89,12 @@ public:
   //(called by the weapon giver-triggers to give a bot a weapon)
   void          AddWeapon(unsigned int weapon_type);
 
+  //remove the current weapon (if it is not a blaster)
+  //in order to drop it
+  //called by a follower raven_bot
+  //returns the id of the weapon removed, -1 if no weapon was removed
+  int			RemoveCurrentWeapon();
+
   //changes the current weapon to one of the specified type (provided that type
   //is in the bot's possession)
   void          ChangeWeapon(unsigned int type);
